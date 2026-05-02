@@ -2,7 +2,7 @@
 
 Universal custom timetable plugin for Apache Airflow with support for multiple schedule formats.
 
-![Tests](https://github.com/0xMihalich/airflow-custom-timetable-plugin/actions/workflows/tests.yml/badge.svg)
+![Tests](https://github.com/0xMihalich/airflow-custom-timetable-plugin/actions/workflows/run_tests.yml/badge.svg)
 ![PyPI](https://img.shields.io/pypi/v/airflow-custom-timetable-plugin)
 
 ## Installation
