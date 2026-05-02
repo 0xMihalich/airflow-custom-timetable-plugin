@@ -291,6 +291,7 @@ class TestCalendarSupport:
             datetime(2024, 6, 19, 8, 0, tz=UTC),
         ]
 
+
 class TestDescription:
     """Tests for description property."""
 
