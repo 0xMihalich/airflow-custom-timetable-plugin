@@ -171,8 +171,10 @@ class ExactTimetable(Timetable):
     ) -> DagRunInfo | None:
         """Determine the next automated DAG run interval."""
 
-        _ = last_automated_data_interval
-        current_time = DateTime.now(UTC)
+        if last_automated_data_interval is not None:
+            current_time = last_automated_data_interval.end
+        else:
+            current_time = DateTime.now(UTC)
 
         if (
             restriction

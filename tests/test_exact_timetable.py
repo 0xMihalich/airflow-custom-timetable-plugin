@@ -226,3 +226,67 @@ class TestManualTrigger:
         result = timetable.infer_manual_data_interval(run_after)
         assert result.start == run_after  # noqa: S101
         assert result.end == run_after  # noqa: S101
+
+
+class TestCalendarSupport:
+    """Tests for calendar view chain generation."""
+
+    @patch("airflow_custom_timetable_plugin.extract_timetable.DateTime")
+    def test_chain_of_future_runs(self, mock_datetime) -> None:
+        """Verify that chaining next_dagrun_info produces correct sequence."""
+
+        mock_datetime.now.return_value = datetime(
+            2024, 6, 15, 7, 0, tz=UTC
+        )
+        timetable = ExactTimetable(schedules=["08:00", "12:00", "18:00"])
+        first = timetable.next_dagrun_info(restriction=None)
+        assert first is not None  # noqa: S101
+        assert first.run_after == datetime(2024, 6, 15, 8, 0, tz=UTC)  # noqa: S101
+        second = timetable.next_dagrun_info(
+            last_automated_data_interval=first.data_interval,
+            restriction=None,
+        )
+        assert second is not None  # noqa: S101
+        assert second.run_after == datetime(2024, 6, 15, 12, 0, tz=UTC)  # noqa: S101
+        third = timetable.next_dagrun_info(
+            last_automated_data_interval=second.data_interval,
+            restriction=None,
+        )
+        assert third is not None  # noqa: S101
+        assert third.run_after == datetime(2024, 6, 15, 18, 0, tz=UTC)  # noqa: S101
+        fourth = timetable.next_dagrun_info(
+            last_automated_data_interval=third.data_interval,
+            restriction=None,
+        )
+        assert fourth is not None  # noqa: S101
+        assert fourth.run_after == datetime(2024, 6, 16, 8, 0, tz=UTC)  # noqa: S101
+
+    @patch("airflow_custom_timetable_plugin.extract_timetable.DateTime")
+    def test_calendar_sequence_no_duplicates(self, mock_datetime) -> None:
+        """Verify no duplicate runs when chaining."""
+
+        mock_datetime.now.return_value = datetime(
+            2024, 6, 15, 7, 0, tz=UTC
+        )
+        timetable = ExactTimetable(schedules=["08:00"])
+        runs = []
+        interval = None
+
+        for _ in range(5):
+            result = timetable.next_dagrun_info(
+                last_automated_data_interval=interval,
+                restriction=None,
+            )
+            assert result is not None  # noqa: S101
+            runs.append(result.run_after)
+            interval = result.data_interval
+
+        assert len(runs) == len(set(runs))  # noqa: S101
+        assert runs == sorted(runs)  # noqa: S101
+        assert runs == [  # noqa: S101
+            datetime(2024, 6, 15, 8, 0, tz=UTC),
+            datetime(2024, 6, 16, 8, 0, tz=UTC),
+            datetime(2024, 6, 17, 8, 0, tz=UTC),
+            datetime(2024, 6, 18, 8, 0, tz=UTC),
+            datetime(2024, 6, 19, 8, 0, tz=UTC),
+        ]

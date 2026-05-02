@@ -1,5 +1,17 @@
 # Version History
 
+## 0.1.3
+
+- Update pytests
+
+### Fixed
+- Fixed calendar view not showing scheduled DAG runs by using `last_automated_data_interval.end`
+as the starting point for computing the next run instead of `DateTime.now(UTC)`.
+
+### Changed
+- `next_dagrun_info()` now correctly chains future runs when `last_automated_data_interval`
+is provided, enabling Airflow to build the calendar view across all supported versions (2.4+).
+
 ## 0.1.2
 
 - Refactor ExactTimetable._next_match() method
