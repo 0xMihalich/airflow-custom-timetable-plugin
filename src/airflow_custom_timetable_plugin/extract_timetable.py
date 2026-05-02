@@ -63,18 +63,13 @@ class ExactTimetable(Timetable):
 
         return sorted(parsed, key=lambda x: x[1:])
 
-    def _next_match(self, current: DateTime) -> DateTime | None:
-        """Find the nearest future match for the given time.
-
-        Iterates through all parsed schedules and computes the next valid
-        run time for each entry, returning the earliest one.
-
-        Args:
-            current: The current datetime to find the next match from.
-
-        Returns:
-            The earliest future DateTime matching any schedule,
-            or None if no schedules are configured."""
+    def _next_match(
+        self,
+        current: DateTime,
+        max_iterations: int = 1000,
+    ) -> DateTime | None:
+        """Find the nearest future match with iteration
+        limit to prevent infinite loops."""
 
         candidates = []
 
@@ -84,7 +79,10 @@ class ExactTimetable(Timetable):
             if kind == "daily":
                 _, h, m = entry
                 candidate = current.set(
-                    hour=h, minute=m, second=0, microsecond=0
+                    hour=h,
+                    minute=m,
+                    second=0,
+                    microsecond=0,
                 )
 
                 if candidate <= current:
@@ -94,30 +92,44 @@ class ExactTimetable(Timetable):
 
             elif kind == "monthly":
                 _, d, h, m = entry
-                candidate = current.set(
-                    day=d, hour=h, minute=m, second=0, microsecond=0
-                )
-
-                if candidate <= current:
-                    candidate = candidate.add(months=1)
-
-                candidates.append(candidate)
+                for _ in range(max_iterations):
+                    try:
+                        candidate = current.set(
+                            day=d,
+                            hour=h,
+                            minute=m,
+                            second=0,
+                            microsecond=0,
+                        )
+                        if candidate <= current:
+                            candidate = candidate.add(months=1)
+                        candidates.append(candidate)
+                        break
+                    except ValueError:
+                        current = current.add(months=1)
+                else:
+                    continue
 
             elif kind == "yearly":
                 _, month, d, h, m = entry
-                candidate = current.set(
-                    month=month,
-                    day=d,
-                    hour=h,
-                    minute=m,
-                    second=0,
-                    microsecond=0,
-                )
-
-                if candidate <= current:
-                    candidate = candidate.add(years=1)
-
-                candidates.append(candidate)
+                for _ in range(max_iterations):
+                    try:
+                        candidate = current.set(
+                            month=month,
+                            day=d,
+                            hour=h,
+                            minute=m,
+                            second=0,
+                            microsecond=0,
+                        )
+                        if candidate <= current:
+                            candidate = candidate.add(years=1)
+                        candidates.append(candidate)
+                        break
+                    except ValueError:
+                        current = current.add(years=1)
+                else:
+                    continue
 
         return min(candidates) if candidates else None
 
@@ -137,23 +149,27 @@ class ExactTimetable(Timetable):
         last_automated_data_interval: DataInterval | None = None,
         restriction: TimeRestriction = None,
     ) -> DagRunInfo | None:
-        """Determine the next automated DAG run interval.
+        """Determine the next automated DAG run interval."""
 
-        Computes the next run time based on the configured schedules.
-        If a previous interval exists, the new interval starts from its end,
-        ensuring continuous data intervals. For the first run, the interval
-        starts and ends at the same time.
-
-        Returns:
-            DagRunInfo with the computed start and end of the next interval,
-            or None if no future schedule is found."""
-
-        _ = last_automated_data_interval, restriction
+        _ = last_automated_data_interval
         current_time = DateTime.now(UTC)
-        end = self._next_match(current_time)
 
-        if end:
-            return DagRunInfo.exact(end)
+        if (
+            restriction
+            and restriction.earliest
+            and restriction.earliest > current_time
+        ):
+            current_time = restriction.earliest
+
+        end = self._next_match(current_time, max_iterations=1000)
+
+        if end is None:
+            return None
+
+        if restriction and restriction.latest and end > restriction.latest:
+            return None
+
+        return DagRunInfo.exact(end)
 
     def serialize(self) -> dict:
         """Serialize timetable for transport between scheduler and webserver.
