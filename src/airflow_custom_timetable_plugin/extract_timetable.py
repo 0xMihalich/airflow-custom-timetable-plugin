@@ -144,26 +144,16 @@ class ExactTimetable(Timetable):
         ensuring continuous data intervals. For the first run, the interval
         starts and ends at the same time.
 
-        Args:
-            last_automated_data_interval: The interval of last automated run.
-            restriction: Time restrictions to apply.
-
         Returns:
             DagRunInfo with the computed start and end of the next interval,
             or None if no future schedule is found."""
 
-        _ = restriction
+        _ = last_automated_data_interval, restriction
         current_time = DateTime.now(UTC)
         end = self._next_match(current_time)
 
         if end:
-            if last_automated_data_interval:
-                return DagRunInfo.interval(
-                    start=last_automated_data_interval.end,
-                    end=end,
-                )
-
-            return DagRunInfo.interval(start=end, end=end)
+            return DagRunInfo.exact(end)
 
     def serialize(self) -> dict:
         """Serialize timetable for transport between scheduler and webserver.

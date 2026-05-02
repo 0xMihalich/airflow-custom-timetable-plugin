@@ -17,4 +17,4 @@ __all__ = (
     "ExactTimetablePlugin",
 )
 __author__ = "0xMihalich"
-__version__ = "0.1.0"
+__version__ = "0.1.1"

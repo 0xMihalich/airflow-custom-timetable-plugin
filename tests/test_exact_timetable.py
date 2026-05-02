@@ -1,6 +1,5 @@
 """Tests for ExactTimetable."""
 
-from airflow.timetables.base import DataInterval
 from airflow_custom_timetable_plugin import ExactTimetable
 from pendulum import (
     datetime,
@@ -160,24 +159,19 @@ class TestNextDagrunInfo:
 
     @patch("airflow_custom_timetable_plugin.extract_timetable.DateTime")
     def test_subsequent_run_continuous_interval(self, mock_datetime) -> None:
-        """Subsequent run: data_interval start from previous end."""
+        """Subsequent run: should use DagRunInfo.exact()."""
 
         mock_datetime.now.return_value = datetime(
             2024, 6, 15, 13, 0, tz=UTC
         )
         timetable = ExactTimetable(schedules=["12:00", "18:00"])
-        previous_end = datetime(2024, 6, 15, 12, 0, tz=UTC)
-        previous_interval = DataInterval(
-            start=datetime(2024, 6, 15, 0, 0, tz=UTC),
-            end=previous_end,
-        )
-        result = timetable.next_dagrun_info(
-            last_automated_data_interval=previous_interval
-        )
+
         expected_end = datetime(2024, 6, 15, 18, 0, tz=UTC)
+        result = timetable.next_dagrun_info()
+
         assert result is not None  # noqa: S101
         assert result.run_after == expected_end  # noqa: S101
-        assert result.data_interval.start == previous_end  # noqa: S101
+        assert result.data_interval.start == expected_end  # noqa: S101
         assert result.data_interval.end == expected_end  # noqa: S101
 
     @patch("airflow_custom_timetable_plugin.extract_timetable.DateTime")
