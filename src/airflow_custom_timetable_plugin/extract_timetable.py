@@ -63,6 +63,58 @@ class ExactTimetable(Timetable):
 
         return sorted(parsed, key=lambda x: x[1:])
 
+    @staticmethod
+    def _daily_candidate(current: DateTime, h: int, m: int) -> DateTime:
+        """Compute next daily candidate."""
+        candidate = current.set(hour=h, minute=m, second=0, microsecond=0)
+        if candidate <= current:
+            candidate = candidate.add(days=1)
+        return candidate
+
+    @staticmethod
+    def _monthly_candidate(
+        current: DateTime, d: int, h: int, m: int, max_iterations: int = 1000
+    ) -> DateTime | None:
+        """Compute next monthly candidate with retry for invalid dates."""
+        for _ in range(max_iterations):
+            try:
+                candidate = current.set(
+                    day=d, hour=h, minute=m, second=0, microsecond=0
+                )
+                if candidate <= current:
+                    candidate = candidate.add(months=1)
+                return candidate
+            except ValueError:
+                current = current.add(months=1)
+        return None
+
+    @staticmethod
+    def _yearly_candidate(
+        current: DateTime,
+        month: int,
+        d: int,
+        h: int,
+        m: int,
+        max_iterations: int = 1000,
+    ) -> DateTime | None:
+        """Compute next yearly candidate with retry for invalid dates."""
+        for _ in range(max_iterations):
+            try:
+                candidate = current.set(
+                    month=month,
+                    day=d,
+                    hour=h,
+                    minute=m,
+                    second=0,
+                    microsecond=0,
+                )
+                if candidate <= current:
+                    candidate = candidate.add(years=1)
+                return candidate
+            except ValueError:
+                current = current.add(years=1)
+        return None
+
     def _next_match(
         self,
         current: DateTime,
@@ -77,59 +129,27 @@ class ExactTimetable(Timetable):
             kind = entry[0]
 
             if kind == "daily":
-                _, h, m = entry
-                candidate = current.set(
-                    hour=h,
-                    minute=m,
-                    second=0,
-                    microsecond=0,
-                )
-
-                if candidate <= current:
-                    candidate = candidate.add(days=1)
-
+                candidate = self._daily_candidate(current, entry[1], entry[2])
                 candidates.append(candidate)
 
             elif kind == "monthly":
-                _, d, h, m = entry
-                for _ in range(max_iterations):
-                    try:
-                        candidate = current.set(
-                            day=d,
-                            hour=h,
-                            minute=m,
-                            second=0,
-                            microsecond=0,
-                        )
-                        if candidate <= current:
-                            candidate = candidate.add(months=1)
-                        candidates.append(candidate)
-                        break
-                    except ValueError:
-                        current = current.add(months=1)
-                else:
-                    continue
+                candidate = self._monthly_candidate(
+                    current, entry[1], entry[2], entry[3], max_iterations
+                )
+                if candidate:
+                    candidates.append(candidate)
 
             elif kind == "yearly":
-                _, month, d, h, m = entry
-                for _ in range(max_iterations):
-                    try:
-                        candidate = current.set(
-                            month=month,
-                            day=d,
-                            hour=h,
-                            minute=m,
-                            second=0,
-                            microsecond=0,
-                        )
-                        if candidate <= current:
-                            candidate = candidate.add(years=1)
-                        candidates.append(candidate)
-                        break
-                    except ValueError:
-                        current = current.add(years=1)
-                else:
-                    continue
+                candidate = self._yearly_candidate(
+                    current,
+                    entry[1],
+                    entry[2],
+                    entry[3],
+                    entry[4],
+                    max_iterations,
+                )
+                if candidate:
+                    candidates.append(candidate)
 
         return min(candidates) if candidates else None
 

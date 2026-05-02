@@ -2,6 +2,8 @@
 
 ## 0.1.2
 
+- Refactor ExactTimetable._next_match() method
+
 ### Fixed
 - Fixed infinite loop in UI when manually changing task status by adding `restriction` support in `next_dagrun_info()`.
 - Fixed potential infinite loop in `_next_match()` for `monthly` and `yearly` schedules by adding `max_iterations` limit.
