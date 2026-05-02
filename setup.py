@@ -6,7 +6,7 @@ readme = Path(__file__).parent / "README.md"
 
 setup(
     name="airflow-custom-timetable-plugin",
-    version="0.1.3",
+    version="1.0.0",
     description=(
         "Universal Apache Airflow plugin with custom timetable support"
     ),
@@ -33,7 +33,7 @@ setup(
         ],
     },
     classifiers=[
-        "Development Status :: 4 - Beta",
+         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",

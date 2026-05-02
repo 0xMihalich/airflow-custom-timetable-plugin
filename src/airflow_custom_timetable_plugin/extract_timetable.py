@@ -212,3 +212,12 @@ class ExactTimetable(Timetable):
             A new ExactTimetable instance with the restored schedules."""
 
         return cls(data.get("schedules", []))
+
+    @property
+    def description(self) -> str:
+        """Human-readable description of the schedule."""
+
+        if not self.schedules:
+            return "No schedule"
+
+        return f"Fixed times: {', '.join(self.schedules)}"

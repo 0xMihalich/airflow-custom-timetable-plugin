@@ -1,5 +1,27 @@
 # Version History
 
+## 1.0.0
+
+- Update README.md
+- Update pytests
+
+### Added
+- Added `description` property to `ExactTimetable` for human-readable schedule display in UI.
+
+### Changed
+- Changed `max_active_runs` recommendation to 1 for fixed-time schedules to prevent unexpected parallel runs.
+- Promoted plugin from beta to stable release.
+
+### Fixed
+- Fixed calendar view not showing scheduled DAG runs by using `last_automated_data_interval.end` as the starting point for computing the next run.
+- Fixed infinite loop in UI when manually changing task status by adding `restriction` support in `next_dagrun_info()`.
+- Fixed potential infinite loop in `_next_match()` for `monthly` and `yearly` schedules by adding `max_iterations` limit.
+- Fixed invalid date handling for `monthly` and `yearly` schedules (e.g., February 31).
+- Fixed zero-length data intervals by replacing `DagRunInfo.interval()` with `DagRunInfo.exact()`.
+
+### Removed
+- Removed beta status from classifiers and documentation.
+
 ## 0.1.3
 
 - Update pytests

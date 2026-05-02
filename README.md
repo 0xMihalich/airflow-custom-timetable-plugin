@@ -36,7 +36,7 @@ with DAG(
     schedule=ExactTimetable(
         schedules=[
             "08:00",         # Every day at 08:00
-            "20:00",         # Every day at 20:00
+            "20:15",         # Every day at 20:00
             "1 12:00",       # 1st day of every month at 12:00
             "01.01 00:00",   # January 1st at 00:00
         ]
@@ -64,7 +64,7 @@ schedule = ExactTimetable(
 schedule = ExactTimetable(
     schedules=[
         "08:00",         # Daily at 8 AM
-        "1 10:00",       # 1st of each month at 10 AM
+        "1 10:05",       # 1st of each month at 10 AM
         "15 14:00",      # 15th of each month at 2 PM
         "12.31 23:59",   # December 31st at 23:59
     ]

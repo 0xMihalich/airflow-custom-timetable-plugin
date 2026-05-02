@@ -290,3 +290,44 @@ class TestCalendarSupport:
             datetime(2024, 6, 18, 8, 0, tz=UTC),
             datetime(2024, 6, 19, 8, 0, tz=UTC),
         ]
+
+class TestDescription:
+    """Tests for description property."""
+
+    def test_description_multiple_schedules(self) -> None:
+        """Description should list all schedules."""
+
+        timetable = ExactTimetable(
+            schedules=["08:00", "12:00", "18:00"]
+        )
+        assert timetable.description == "Fixed times: 08:00, 12:00, 18:00"  # noqa: S101
+
+    def test_description_single_schedule(self) -> None:
+        """Description with single schedule."""
+
+        timetable = ExactTimetable(schedules=["08:00"])
+        assert timetable.description == "Fixed times: 08:00"  # noqa: S101
+
+    def test_description_empty_schedules(self) -> None:
+        """Description with empty schedules."""
+
+        timetable = ExactTimetable(schedules=[])
+        assert timetable.description == "No schedule"  # noqa: S101
+
+    def test_description_mixed_schedules(self) -> None:
+        """Description with mixed schedule formats."""
+
+        timetable = ExactTimetable(
+            schedules=["08:00", "15 12:00", "12.31 23:59"]
+        )
+        assert timetable.description == (  # noqa: S101
+            "Fixed times: 08:00, 15 12:00, 12.31 23:59"
+        )
+
+    def test_description_preserves_order(self) -> None:
+        """Description should reflect original order, not parsed order."""
+
+        timetable = ExactTimetable(
+            schedules=["22:00", "08:00", "14:00"]
+        )
+        assert timetable.description == "Fixed times: 22:00, 08:00, 14:00"  # noqa: S101
